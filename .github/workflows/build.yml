@@ -9,17 +9,31 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-      - uses: android-actions/setup-android@v3
-      - run: |
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-34 build-tools;34.0.0 ndk;26.1.10909125 cmake;3.22.1'
+
+      - name: Accept licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Build APK
+        run: |
           cd android-swrots
-          gradle wrapper
-          ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
+          gradle wrapper --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: swrots-android-debug
           path: android-swrots/app/build/outputs/apk/debug/app-debug.apk
